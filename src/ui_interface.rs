@@ -590,7 +590,15 @@ pub fn check_mouse_time() {
 #[inline]
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub fn get_connect_status() -> UiStatus {
-    UI_STATUS.lock().unwrap().clone()
+    let mut status = UI_STATUS.lock().unwrap().clone();
+    // LAN-only build: there is no RustDesk rendezvous server to register with,
+    // so the "connecting" state (0) never advances and the UI would show
+    // "Connecting to the RustDesk network..." forever. Report ready while the
+    // service is up; keep -1 (not ready / service down) untouched.
+    if status.status_num == 0 {
+        status.status_num = 1;
+    }
+    status
 }
 
 #[inline]
